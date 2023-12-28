@@ -1,0 +1,146 @@
+#!/bin/bash
+
+function show_help() {
+    echo "Usage: internsctl <command> [options] [arguments]"
+    echo "Commands:"
+    echo "  cpu getinfo          Display CPU information"
+    echo "  memory getinfo       Display memory information"
+    echo "  user create <username>   Create a new user"
+    echo "  user list            List all regular users"
+    echo "  user list --sudo-only    List users with sudo permissions"
+    echo "  file getinfo <file-name> Display information about a file"
+    echo "Options:"
+    echo "  --size, -s           Print size of the file"
+    echo "  --permissions, -p    Print file permissions"
+    echo "  --owner, -o          Print file owner"
+    echo "  --last-modified, -m  Print last modified time"
+    echo "  --help               Show help information"
+    echo "  --version            Show version information"
+}
+
+function show_version() {
+    echo "internsctl version 1.0"
+}
+
+function cpu_getinfo() {
+    lscpu
+}
+
+function memory_getinfo() {
+    free
+}
+
+function user_create() {
+    username=$1
+    useradd -m $username
+}
+
+function user_list() {
+    if [ "$1" == "--sudo-only" ]; then
+        getent group sudo | cut -d: -f4
+    else
+        cut -d: -f1 /etc/passwd
+    fi
+}
+
+function file_getinfo() {
+    file_name=$1
+    if [ -z "$2" ]; then
+        stat -c "File: %n\nAccess: %a\nSize(B): %s\nOwner: %U\nModify: %y" $file_name
+    else
+        case "$2" in
+            "--size" | "-s") stat -c "%s" $file_name ;;
+            "--permissions" | "-p") stat -c "%a" $file_name ;;
+            "--owner" | "-o") stat -c "%U" $file_name ;;
+            "--last-modified" | "-m") stat -c "%y" $file_name ;;
+            *) echo "Invalid option"; exit 1 ;;
+        esac
+    fi
+}
+
+# Documentation/Manual Page
+function show_manual() {
+    echo "internsctl(1)                  User Commands                 internsctl(1)"
+    echo ""
+    echo "NAME"
+    echo "       internsctl - Linux Command Utility"
+    echo ""
+    echo "SYNOPSIS"
+    echo "       internsctl <command> [options] [arguments]"
+    echo ""
+    echo "DESCRIPTION"
+    echo "       internsctl is a Bash script that serves as a Linux command utility,"
+    echo "       providing various functionalities related to CPU, memory, user management,"
+    echo "       and file information."
+    echo ""
+    echo "COMMANDS"
+    echo "       cpu getinfo"
+    echo "              Display CPU information."
+    echo ""
+    echo "       memory getinfo"
+    echo "              Display memory information."
+    echo ""
+    echo "       user create <username>"
+    echo "              Create a new user."
+    echo ""
+    echo "       user list"
+    echo "              List all regular users."
+    echo ""
+    echo "       user list --sudo-only"
+    echo "              List users with sudo permissions."
+    echo ""
+    echo "       file getinfo <file-name>"
+    echo "              Display information about a file."
+    echo ""
+    echo "OPTIONS"
+    echo "       --size, -s"
+    echo "              Print size of the file."
+    echo ""
+    echo "       --permissions, -p"
+    echo "              Print file permissions."
+    echo ""
+    echo "       --owner, -o"
+    echo "              Print file owner."
+    echo ""
+    echo "       --last-modified, -m"
+    echo "              Print last modified time."
+    echo ""
+    echo "       --help"
+    echo "              Show help information."
+    echo ""
+    echo "       --version"
+    echo "              Show version information."
+}
+
+case "$1" in
+    "cpu" )
+        case "$2" in
+            "getinfo" ) cpu_getinfo ;;
+            *) show_help ;;
+        esac
+        ;;
+    "memory" )
+        case "$2" in
+            "getinfo" ) memory_getinfo ;;
+            *) show_help ;;
+        esac
+        ;;
+    "user" )
+        case "$2" in
+            "create" ) user_create $3 ;;
+            "list" ) user_list $3 ;;
+            *) show_help ;;
+        esac
+        ;;
+    "file" )
+        case "$2" in
+            "getinfo" ) file_getinfo $3 $4 ;;
+            *) show_help ;;
+        esac
+        ;;
+    "--help" ) show_help ;;
+    "--version" ) show_version ;;
+    "--manual" ) show_manual ;;
+    * ) show_help ;;
+esac
+
